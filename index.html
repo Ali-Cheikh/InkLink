@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing 😉</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+        <button id="set-btn" class="btn btn-secondary">Set</button>
+        <button id="download-btn" class="btn btn-secondary">Download</button>
+        <button id="clear-btn" class="btn btn-secondary">Clear</button>
+        <input type="color" id="color-picker">
+        <input type="range" id="line-width" min="1" max="600" value="10">
+    </div>
+    <div id="history">
+        <button id="undo-btn" class="btn btn-secondary">Undo</button>
+        <button id="redo-btn" class="btn btn-secondary">Redo</button>
+    </div>
+    <div id="share-link" class="btn-group">
+        <output id="image-link" class="form-control" style="text-overflow: clip;"></output>
+        <button id="copy-link-btn" class="btn btn-link">Copy</button>
+    </div>
+    <button id="tab-btn" class="btn btn-secondary">Tab</button>
+    <div id="sidebar">
+        <button id="set-btn-mobile" class="btn btn-secondary">Set</button>
+        <button id="download-btn-mobile" class="btn btn-secondary">Download</button>
+        <button id="clear-btn-mobile" class="btn btn-secondary">Clear</button>
+        <button id="close-tab-btn" class="btn btn-secondary">Close Tab</button>
+        <input type="color" id="color-picker-sidebar">
+        <input type="range" id="line-width-sidebar" min="1" max="600" value="10">
+    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+
+body {
+    margin: 0;
+    overflow: hidden;
+}
+
+canvas {
+    display: block;
+    background-color: #ffffff;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#controls {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1;
+}
+
+#clear-btn {
+    margin-right: 10px;
+}
+
+#set-btn {
+    margin-right: 10px;
+}
+
+#download-btn {
+    margin-right: 10px;
+}
+
+#history {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+#share-link {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    display: none;
+}
+
+.btn-secondary {
+    margin-top: 10px;
+}
+
+#mobile-controls {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+    display: none;
+}
+
+#tab-btn {
+    position: fixed;
+    top: 25px;
+    min-width: 65px;
+    left: 90%;
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+#sidebar {
+    position: fixed;
+    top: 0;
+    right: -250px;
+    width: 250px;
+    height: 100%;
+    background-color: #f0f0f0;
+    z-index: 1;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 990px) {
+    #controls,
+    #history,
+    #share-link {
+        display: none;
+    }
+
+    #mobile-controls {
+        padding: 10px;
+        display: inline;
+        position: relative;
+        top: 99%;
+    }
+
+    #color-picker {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 1;
+    }
+
+    #line-width {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 1;
+    }
+
+    #tab-btn {
+        display: block;
+    }
+
+    #sidebar {
+        transition: right 0.3s ease;
+    }
+
+    #image-link {
+        margin-top: 10px;
+    }
+
+    #history {
+        justify-content: center;
+        display: inline-block;
+        top: 25px;
+        left: 5px;
+    }
+
+    #clear-btn {
+        display: flex;
+        position: absolute;
+        top: 0%;
+        right: 0%;
+    }
+
+    #color-picker {
+        top: 30px;
+        right: 15px;
+    }
+
+    .none {
+        display: none;
+    }
+}
+
+@media (min-width: 990px) {
+    #tab-btn {
+        display: none;
+    }
+
+    .middle {
+        position: fixed;
+        top: 22px;
+        left: 50%;
+        margin-top: 20px;
+        transform: translateX(-50%);
+        z-index: 2;
+    }
+}
