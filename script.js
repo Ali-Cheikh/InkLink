@@ -87,7 +87,7 @@ window.addEventListener("load", () => {
         if (dataUrl) {
             const link = document.createElement("a");
             link.href = dataUrl;
-            link.download = "canvas_image.jpg";
+            link.download = "InkLink-img.jpg";
             link.click();
         } else {
             Swal.fire("No image saved.");
