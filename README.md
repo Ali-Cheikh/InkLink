@@ -52,7 +52,7 @@ InkLink is a responsive, full-screen drawing web application that allows users t
 
 - **Canvas API**: Core drawing functionality leverages the HTML5 Canvas API for rendering.
 - **State Management**: Uses JavaScript objects to track canvas history.
-- **CSS**: Styled for responsiveness, especially on mobile, with a collapsible sidebar.
+- **CSS**: Styled for responsiveness, especially on mobile, with a collapsible sidebar with **Bootstrap** library.
 - **SweetAlert2**: Integrated for user notifications.
 
 Feel free to extend InkLink with additional features! Contributions are welcome through pull requests.

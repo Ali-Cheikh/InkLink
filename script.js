@@ -200,6 +200,21 @@ canvas.addEventListener("wheel", (event) => {
     canvas.style.transform = `scale(${scale})`;
 });
 
+// // Adjusting resizing function to maintain drawing quality
+// function Resize(canvas) {
+//     const tempCanvas = document.createElement("canvas");
+//     const tempCtx = tempCanvas.getContext("2d");
+
+//     tempCanvas.width = canvas.width;
+//     tempCanvas.height = canvas.height;
+
+//     tempCtx.drawImage(canvas, 0, 0);
+//     canvas.width = window.innerWidth;
+//     canvas.height = window.innerHeight;
+
+//     ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+// }
+
 
 function loadColorFromStorage() {
     const savedColor = localStorage.getItem("background_color");
