@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Zoom and Draw</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            touch-action: none; /* Prevent touch event issues */
+            display: block;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="myCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let scale = 1; // Initial scale
+        let offsetX = 0; // To keep track of offset due to zooming
+        let offsetY = 0;
+        
+        let isDrawing = false; // Flag to track if the user is drawing
+        let lastX = 0; // Last mouse X position
+        let lastY = 0; // Last mouse Y position
+
+        // Draw a simple grid for testing zoom
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.scale(scale, scale);
+            // Draw a grid for visibility
+            const gridSpacing = 20; // Change for different grid spacing
+            ctx.beginPath();
+            for (let x = 0; x < canvas.width / scale; x += gridSpacing) {
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height / scale);
+            }
+            for (let y = 0; y < canvas.height / scale; y += gridSpacing) {
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width / scale, y);
+            }
+            ctx.strokeStyle = 'lightgray';
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Initial draw
+        draw();
+
+        // Zoom functionality
+        canvas.addEventListener('wheel', (event) => {
+            event.preventDefault(); // Prevent default scrolling
+
+            const scaleFactor = 0.1; // Zoom sensitivity
+            const mouseX = event.offsetX; // Mouse X position relative to the canvas
+            const mouseY = event.offsetY; // Mouse Y position relative to the canvas
+
+            // Calculate new scale
+            if (event.deltaY < 0) {
+                // Zoom in
+                scale += scaleFactor;
+            } else {
+                // Zoom out, ensure scale doesn't go below 1
+                scale = Math.max(scale - scaleFactor, 1);
+            }
+
+            // Adjust offset to zoom towards the cursor
+            const newScale = scale / (scale - scaleFactor * (event.deltaY < 0 ? 1 : -1));
+            offsetX += (mouseX - offsetX) * (1 - newScale);
+            offsetY += (mouseY - offsetY) * (1 - newScale);
+
+            // Redraw canvas
+            canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+            draw();
+        });
+
+        // Drawing functionality
+        canvas.addEventListener('mousedown', (event) => {
+            isDrawing = true;
+            lastX = (event.offsetX - offsetX) / scale; // Adjust for scale and offset
+            lastY = (event.offsetY - offsetY) / scale; // Adjust for scale and offset
+        });
+
+        canvas.addEventListener('mousemove', (event) => {
+            if (isDrawing) {
+                const currentX = (event.offsetX - offsetX) / scale; // Adjust for scale and offset
+                const currentY = (event.offsetY - offsetY) / scale; // Adjust for scale and offset
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(currentX, currentY);
+                ctx.strokeStyle = 'black'; // Drawing color
+                ctx.lineWidth = 2; // Line width
+                ctx.stroke();
+                lastX = currentX;
+                lastY = currentY;
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDrawing = false;
+        });
+
+        // Optional: Add mouse drag functionality
+        let isDragging = false;
+        let startX, startY;
+
+        canvas.addEventListener('mousedown', (event) => {
+            if (!isDrawing) { // Only allow dragging if not drawing
+                isDragging = true;
+                startX = event.offsetX - offsetX;
+                startY = event.offsetY - offsetY;
+            }
+        });
+
+        canvas.addEventListener('mousemove', (event) => {
+            if (isDragging) {
+                offsetX = event.offsetX - startX;
+                offsetY = event.offsetY - startY;
+                canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+                draw();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+    </script>
+</body>
+</html>

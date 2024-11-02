@@ -74,7 +74,7 @@ window.addEventListener("load", () => {
             return;
         }
         const dataUrl = canvas.toDataURL("image/png");
-        localStorage.setItem("canvas_image", dataUrl);
+        localStorage.setItem("InkLink-img", dataUrl);
         updateShareLink(dataUrl);
     }
 
@@ -199,6 +199,7 @@ canvas.addEventListener("wheel", (event) => {
     scale = Math.min(Math.max(0.5, scale), 3); // Limit scale between 0.5 and 3
     canvas.style.transform = `scale(${scale})`;
 });
+
 
 function loadColorFromStorage() {
     const savedColor = localStorage.getItem("background_color");
