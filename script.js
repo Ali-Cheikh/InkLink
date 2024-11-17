@@ -87,7 +87,6 @@ window.addEventListener("load", () => {
 
     function changeColor(event) {
         color = event.target.value;
-        Swal.fire("New color applied to future drawings.");
         localStorage.setItem("background_color", color);
     }
 
