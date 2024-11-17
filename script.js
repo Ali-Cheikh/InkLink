@@ -1,6 +1,10 @@
 function Resize(canvas) {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const maxWidth = 1920; // Example maximum width
+    const maxHeight = 1080; // Example maximum height
+    canvas.width = Math.min(window.innerWidth, maxWidth);
+    canvas.height = Math.min(window.innerHeight, maxHeight);
+    ctx.putImageData(imageData, 0, 0);
 }
 
 let canvas, ctx;
@@ -9,18 +13,24 @@ let historyIndex = -1;
 let drawing = false;
 let color = "#000000";
 let lineWidth = 10;
-let scale = 1;
 
 window.addEventListener("load", () => {
     canvas = document.querySelector("#canvas");
     ctx = canvas.getContext("2d");
     Resize(canvas);
-    loadColorFromStorage(); // Load previously stored background color
+    loadColorFromStorage();
 
     let lastX, lastY;
 
-    // Helper Functions
+    // Initialize Canvas History
+    drawingHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    historyIndex = 0;
+
+    // Event Listeners
+    setupEventListeners();
+
     function setupEventListeners() {
+        // Canvas Events
         canvas.addEventListener("mousedown", startPosition);
         canvas.addEventListener("mouseup", endPosition);
         canvas.addEventListener("mousemove", draw);
@@ -35,33 +45,50 @@ window.addEventListener("load", () => {
             draw(event.touches[0]);
         });
 
-        document.getElementById("clear-btn").addEventListener("click", clearCanvas);
-        document.getElementById("clear-btn-mobile").addEventListener("click", clearCanvas);
-        document.getElementById("color-picker").addEventListener("input", changeColor);
-        document.getElementById("color-picker-sidebar").addEventListener("input", changeColor);
-        document.getElementById("line-width").addEventListener("input", changeLineWidth);
-        document.getElementById("line-width-sidebar").addEventListener("input", changeLineWidth);
-        document.getElementById("set-btn").addEventListener("click", setCanvasImage);
-        document.getElementById("set-btn-mobile").addEventListener("click", setCanvasImage);
-        document.getElementById("download-btn").addEventListener("click", downloadImage);
-        document.getElementById("download-btn-mobile").addEventListener("click", downloadImage);
+        // Button Events
+        addEventListeners(["clear-btn", "clear-btn-mobile"], "click", clearCanvas);
+        addEventListeners(
+            ["color-picker", "color-picker-sidebar"],
+            "input",
+            changeColor
+        );
+        addEventListeners(
+            ["line-width", "line-width-sidebar"],
+            "input",
+            changeLineWidth
+        );
+        addEventListeners(["set-btn", "set-btn-mobile"], "click", setCanvasImage);
+        addEventListeners(
+            ["download-btn", "download-btn-mobile"],
+            "click",
+            downloadImage
+        );
         document.getElementById("undo-btn").addEventListener("click", undo);
         document.getElementById("redo-btn").addEventListener("click", redo);
         document.getElementById("copy-link-btn").addEventListener("click", copyLink);
         document.getElementById("tab-btn").addEventListener("click", toggleSidebar);
-        document.getElementById("close-tab-btn").addEventListener("click", closeSidebar);
+        document
+            .getElementById("close-tab-btn")
+            .addEventListener("click", closeSidebar);
+    }
+
+    function addEventListeners(elementIds, event, handler) {
+        elementIds.forEach((id) =>
+            document.getElementById(id).addEventListener(event, handler)
+        );
     }
 
     function clearCanvas() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawingHistory = [];
-        historyIndex = -1;
+        drawingHistory = [ctx.getImageData(0, 0, canvas.width, canvas.height)];
+        historyIndex = 0;
         updateShareLink();
     }
 
     function changeColor(event) {
         color = event.target.value;
-        localStorage.setItem("background_color", color); // Save color to local storage
+        Swal.fire("New color applied to future drawings.");
+        localStorage.setItem("background_color", color);
     }
 
     function changeLineWidth(event) {
@@ -83,15 +110,11 @@ window.addEventListener("load", () => {
             Swal.fire("You can't download unless you click <b>SET</b>");
             return;
         }
-        const dataUrl = localStorage.getItem("canvas_image");
-        if (dataUrl) {
-            const link = document.createElement("a");
-            link.href = dataUrl;
-            link.download = "InkLink-img.jpg";
-            link.click();
-        } else {
-            Swal.fire("No image saved.");
-        }
+        const dataUrl = canvas.toDataURL("image/png");
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = "InkLink-img.png";
+        link.click();
     }
 
     function undo() {
@@ -128,15 +151,16 @@ window.addEventListener("load", () => {
     }
 
     function updateShareLink(imageUrl) {
+        const dataUrl = imageUrl || canvas.toDataURL("image/png");
         const imageLink = document.getElementById("image-link");
-        imageLink.textContent = imageUrl ? imageUrl : `no_link_set`;
+        imageLink.textContent = dataUrl ? dataUrl : `no_link_set`;
     }
 
     function getMousePos(event) {
         const rect = canvas.getBoundingClientRect();
         return {
             x: event.clientX - rect.left,
-            y: event.clientY - rect.top
+            y: event.clientY - rect.top,
         };
     }
 
@@ -157,8 +181,9 @@ window.addEventListener("load", () => {
 
     function endPosition() {
         if (drawing) {
+            drawingHistory = drawingHistory.slice(0, historyIndex + 1); // Remove redo history
             drawingHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-            if (drawingHistory.length > 50) drawingHistory.shift(); // Limit history to improve performance
+            if (drawingHistory.length > 100) drawingHistory.shift(); // Limit history
             historyIndex = drawingHistory.length - 1;
             updateShareLink();
         }
@@ -181,40 +206,11 @@ window.addEventListener("load", () => {
         lastX = currentX;
         lastY = currentY;
     }
-
-    setupEventListeners();
 });
 
 window.addEventListener("resize", () => {
     Resize(canvas);
 });
-
-// Zoom functionality
-canvas.addEventListener("wheel", (event) => {
-    event.preventDefault();
-    const scaleFactor = 0.1; // Adjust as needed
-    const deltaY = event.deltaY;
-
-    scale += deltaY < 0 ? scaleFactor : -scaleFactor;
-    scale = Math.min(Math.max(0.5, scale), 3); // Limit scale between 0.5 and 3
-    canvas.style.transform = `scale(${scale})`;
-});
-
-// // Adjusting resizing function to maintain drawing quality
-// function Resize(canvas) {
-//     const tempCanvas = document.createElement("canvas");
-//     const tempCtx = tempCanvas.getContext("2d");
-
-//     tempCanvas.width = canvas.width;
-//     tempCanvas.height = canvas.height;
-
-//     tempCtx.drawImage(canvas, 0, 0);
-//     canvas.width = window.innerWidth;
-//     canvas.height = window.innerHeight;
-
-//     ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
-// }
-
 
 function loadColorFromStorage() {
     const savedColor = localStorage.getItem("background_color");
