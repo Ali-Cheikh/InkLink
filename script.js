@@ -1,10 +1,6 @@
 function Resize(canvas) {
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const maxWidth = 1920; // Example maximum width
-    const maxHeight = 1080; // Example maximum height
-    canvas.width = Math.min(window.innerWidth, maxWidth);
-    canvas.height = Math.min(window.innerHeight, maxHeight);
-    ctx.putImageData(imageData, 0, 0);
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 }
 
 let canvas, ctx;
@@ -18,150 +14,9 @@ window.addEventListener("load", () => {
     canvas = document.querySelector("#canvas");
     ctx = canvas.getContext("2d");
     Resize(canvas);
-    loadColorFromStorage();
 
+    // Variables to store previous touch/mouse coordinates
     let lastX, lastY;
-
-    // Initialize Canvas History
-    drawingHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-    historyIndex = 0;
-
-    // Event Listeners
-    setupEventListeners();
-
-    function setupEventListeners() {
-        // Canvas Events
-        canvas.addEventListener("mousedown", startPosition);
-        canvas.addEventListener("mouseup", endPosition);
-        canvas.addEventListener("mousemove", draw);
-
-        canvas.addEventListener("touchstart", (event) => {
-            event.preventDefault();
-            startPosition(event.touches[0]);
-        });
-        canvas.addEventListener("touchend", endPosition);
-        canvas.addEventListener("touchmove", (event) => {
-            event.preventDefault();
-            draw(event.touches[0]);
-        });
-
-        // Button Events
-        addEventListeners(["clear-btn", "clear-btn-mobile"], "click", clearCanvas);
-        addEventListeners(
-            ["color-picker", "color-picker-sidebar"],
-            "input",
-            changeColor
-        );
-        addEventListeners(
-            ["line-width", "line-width-sidebar"],
-            "input",
-            changeLineWidth
-        );
-        addEventListeners(["set-btn", "set-btn-mobile"], "click", setCanvasImage);
-        addEventListeners(
-            ["download-btn", "download-btn-mobile"],
-            "click",
-            downloadImage
-        );
-        document.getElementById("undo-btn").addEventListener("click", undo);
-        document.getElementById("redo-btn").addEventListener("click", redo);
-        document.getElementById("copy-link-btn").addEventListener("click", copyLink);
-        document.getElementById("tab-btn").addEventListener("click", toggleSidebar);
-        document
-            .getElementById("close-tab-btn")
-            .addEventListener("click", closeSidebar);
-    }
-
-    function addEventListeners(elementIds, event, handler) {
-        elementIds.forEach((id) =>
-            document.getElementById(id).addEventListener(event, handler)
-        );
-    }
-
-    function clearCanvas() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawingHistory = [ctx.getImageData(0, 0, canvas.width, canvas.height)];
-        historyIndex = 0;
-        updateShareLink();
-    }
-
-    function changeColor(event) {
-        color = event.target.value;
-        localStorage.setItem("background_color", color);
-    }
-
-    function changeLineWidth(event) {
-        lineWidth = event.target.value;
-    }
-
-    function setCanvasImage() {
-        if (drawingHistory.length === 0) {
-            Swal.fire("Your screen is empty draw something");
-            return;
-        }
-        const dataUrl = canvas.toDataURL("image/png");
-        localStorage.setItem("InkLink-img", dataUrl);
-        updateShareLink(dataUrl);
-    }
-
-    function downloadImage() {
-        if (drawingHistory.length === 0) {
-            Swal.fire("You can't download unless you click <b>SET</b>");
-            return;
-        }
-        const dataUrl = canvas.toDataURL("image/png");
-        const link = document.createElement("a");
-        link.href = dataUrl;
-        link.download = "InkLink-img.png";
-        link.click();
-    }
-
-    function undo() {
-        if (historyIndex > 0) {
-            historyIndex--;
-            ctx.putImageData(drawingHistory[historyIndex], 0, 0);
-            updateShareLink();
-        }
-    }
-
-    function redo() {
-        if (historyIndex < drawingHistory.length - 1) {
-            historyIndex++;
-            ctx.putImageData(drawingHistory[historyIndex], 0, 0);
-            updateShareLink();
-        }
-    }
-
-    function copyLink() {
-        const imageLink = document.getElementById("image-link");
-        navigator.clipboard.writeText(imageLink.textContent).then(() => {
-            Swal.fire("Image link copied to clipboard!");
-        });
-    }
-
-    function toggleSidebar() {
-        const sidebar = document.getElementById("sidebar");
-        sidebar.style.right = sidebar.style.right === "0px" ? "-250px" : "0px";
-    }
-
-    function closeSidebar() {
-        const sidebar = document.getElementById("sidebar");
-        sidebar.style.right = "-250px";
-    }
-
-    function updateShareLink(imageUrl) {
-        const dataUrl = imageUrl || canvas.toDataURL("image/png");
-        const imageLink = document.getElementById("image-link");
-        imageLink.textContent = dataUrl ? dataUrl : `no_link_set`;
-    }
-
-    function getMousePos(event) {
-        const rect = canvas.getBoundingClientRect();
-        return {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top,
-        };
-    }
 
     function startPosition(event) {
         drawing = true;
@@ -169,10 +24,12 @@ window.addEventListener("load", () => {
         ctx.lineWidth = lineWidth;
         ctx.lineCap = "round";
 
-        const pos = getMousePos(event);
+        // Get the initial touch/mouse position
+        const pos = getMousePos(canvas, event);
         lastX = pos.x;
         lastY = pos.y;
 
+        // Begin the drawing path
         ctx.beginPath();
         ctx.moveTo(lastX, lastY);
         document.getElementById("share-link").style.display = "block";
@@ -180,9 +37,7 @@ window.addEventListener("load", () => {
 
     function endPosition() {
         if (drawing) {
-            drawingHistory = drawingHistory.slice(0, historyIndex + 1); // Remove redo history
             drawingHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-            if (drawingHistory.length > 100) drawingHistory.shift(); // Limit history
             historyIndex = drawingHistory.length - 1;
             updateShareLink();
         }
@@ -193,17 +48,168 @@ window.addEventListener("load", () => {
     function draw(event) {
         if (!drawing) return;
 
-        const pos = getMousePos(event);
+        // Get the current touch/mouse position
+        const pos = getMousePos(canvas, event);
         const currentX = pos.x;
         const currentY = pos.y;
 
+        // Draw a line segment from the last position to the current position
         ctx.beginPath();
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(currentX, currentY);
         ctx.stroke();
 
+        // Update the last position to the current position
         lastX = currentX;
         lastY = currentY;
+    }
+
+    canvas.addEventListener("mousedown", startPosition);
+    canvas.addEventListener("mouseup", endPosition);
+    canvas.addEventListener("mousemove", draw);
+
+    canvas.addEventListener("touchstart", (event) => {
+        event.preventDefault();
+        startPosition(event.touches[0]);
+    });
+
+    canvas.addEventListener("touchend", endPosition);
+    canvas.addEventListener("touchmove", (event) => {
+        event.preventDefault();
+        draw(event.touches[0]);
+    });
+
+    document.getElementById("clear-btn").addEventListener("click", () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawingHistory = [];
+        historyIndex = -1;
+        updateShareLink();
+    });
+
+    document.getElementById("clear-btn-mobile").addEventListener("click", () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawingHistory = [];
+        historyIndex = -1;
+        updateShareLink();
+    });
+
+    document.getElementById("color-picker").addEventListener("input", (event) => {
+        color = event.target.value;
+    });
+
+    document.getElementById("color-picker-sidebar").addEventListener("input", (event) => {
+        color = event.target.value;
+    });
+
+    document.getElementById("line-width").addEventListener("input", (event) => {
+        lineWidth = event.target.value;
+    });
+
+    document.getElementById("line-width-sidebar").addEventListener("input", (event) => {
+        lineWidth = event.target.value;
+    });
+
+    document.getElementById("set-btn").addEventListener("click", () => {
+        if (drawingHistory.length === 0) {
+            Swal.fire("lezmik torsom 7aga");
+            return;
+        }
+        const dataUrl = canvas.toDataURL("image/png");
+        localStorage.setItem("canvas_image", dataUrl);
+        updateShareLink(dataUrl);
+    });
+
+    document.getElementById("set-btn-mobile").addEventListener("click", () => {
+        if (drawingHistory.length === 0) {
+            Swal.fire("lezmik torsom 7aga");
+            return;
+        }
+        const dataUrl = canvas.toDataURL("image/png");
+        localStorage.setItem("canvas_image", dataUrl);
+        updateShareLink(dataUrl);
+    });
+
+    document.getElementById("download-btn").addEventListener("click", () => {
+        if (drawingHistory.length === 0) {
+            Swal.fire("generati link wila lezmik torsom 7aga");
+            return;
+        }
+        const dataUrl = localStorage.getItem("canvas_image");
+        if (dataUrl) {
+            const link = document.createElement("a");
+            link.href = dataUrl;
+            link.download = "canvas_image.jpg";
+            link.click();
+        } else {
+            Swal.fire("No image saved.");
+        }
+    });
+
+    document.getElementById("download-btn-mobile").addEventListener("click", () => {
+        if (drawingHistory.length === 0) {
+            Swal.fire("generati link wila lezmik torsom 7aga");
+            return;
+        }
+        const dataUrl = localStorage.getItem("canvas_image");
+        if (dataUrl) {
+            const link = document.createElement("a");
+            link.href = dataUrl;
+            link.download = "canvas_image.jpg";
+            link.click();
+        } else {
+            Swal.fire("No image saved.");
+        }
+    });
+
+    document.getElementById("undo-btn").addEventListener("click", () => {
+        if (historyIndex > 0) {
+            historyIndex--;
+            ctx.putImageData(drawingHistory[historyIndex], 0, 0);
+            updateShareLink();
+        }
+    });
+
+    document.getElementById("redo-btn").addEventListener("click", () => {
+        if (historyIndex < drawingHistory.length - 1) {
+            historyIndex++;
+            ctx.putImageData(drawingHistory[historyIndex], 0, 0);
+            updateShareLink();
+        }
+    });
+
+    document.getElementById("copy-link-btn").addEventListener("click", () => {
+        const imageLink = document.getElementById
+        ("image-link");
+        navigator.clipboard.writeText(imageLink.textContent).then(() => {
+            Swal.fire("Image link copied to clipboard!");
+        });
+    });
+
+    document.getElementById("tab-btn").addEventListener("click", () => {
+        const sidebar = document.getElementById("sidebar");
+        sidebar.style.right = sidebar.style.right === "0px" ? "-250px" : "0px";
+    });
+
+    document.getElementById("close-tab-btn").addEventListener("click", () => {
+        const sidebar = document.getElementById("sidebar");
+        sidebar.style.right = "-250px";
+    });
+
+    function updateShareLink(imageUrl) {
+        const imageLink = document.getElementById("image-link");
+        if (imageUrl) {
+            imageLink.textContent = imageUrl;
+        } else {
+            imageLink.textContent = `no_link_set`;
+        }
+    }
+
+    function getMousePos(canvas, event) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        };
     }
 });
 
@@ -211,11 +217,18 @@ window.addEventListener("resize", () => {
     Resize(canvas);
 });
 
-function loadColorFromStorage() {
-    const savedColor = localStorage.getItem("background_color");
-    if (savedColor) {
-        color = savedColor;
-        document.getElementById("color-picker").value = savedColor;
-        document.getElementById("color-picker-sidebar").value = savedColor;
+// Zoom functionality
+let scale = 1;
+canvas.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    const scaleFactor = 0.1; // Adjust as needed
+    const deltaY = event.deltaY;
+    if (deltaY < 0) {
+        // Zoom in
+        scale += scaleFactor;
+    } else {
+        // Zoom out
+        scale -= scaleFactor;
     }
-}
+    canvas.style.transform = `scale(${scale})`;
+});
